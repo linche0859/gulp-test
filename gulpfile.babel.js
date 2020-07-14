@@ -1,6 +1,7 @@
 import gulp from 'gulp';
 import sourcemaps from 'gulp-sourcemaps';
 import sass from 'gulp-sass';
+import nodeSass from 'node-sass';
 import babel from 'gulp-babel';
 import concat from 'gulp-concat';
 import uglify from 'gulp-uglify';
@@ -23,7 +24,7 @@ const paths = {
   },
 };
 
-sass.compiler = require('node-sass');
+sass.compiler = nodeSass;
 
 export const clean = () => del(['dist']);
 
