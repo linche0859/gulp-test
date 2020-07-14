@@ -1,0 +1,1 @@
+{"version":3,"file":"all.css","sources":["all.scss"],"sourcesContent":["$primary: #f00;\r\n$secondary: #0f0;\r\n\r\nbody {\r\n  color: $secondary;\r\n}\r\n"],"names":[],"mappings":"AAGA,AAAA,IAAI,CAAC;EACH,KAAK,EAHK,IAAI,GAIf"}
