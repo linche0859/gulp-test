@@ -8,6 +8,7 @@ import uglify from 'gulp-uglify';
 import del from 'del';
 import browserSync from 'browser-sync';
 import ghPages from 'gulp-gh-pages';
+import plumber from 'gulp-plumber';
 
 const paths = {
   html: {
@@ -38,6 +39,7 @@ function copyHTML() {
 export function styles() {
   return gulp
     .src(paths.styles.src)
+    .pipe(plumber())
     .pipe(sourcemaps.init())
     .pipe(sass().on('error', sass.logError))
     .pipe(sourcemaps.write('./'))
@@ -48,6 +50,7 @@ export function styles() {
 export function scripts() {
   return gulp
     .src(paths.scripts.src, { sourcemaps: true })
+    .pipe(plumber())
     .pipe(sourcemaps.init())
     .pipe(
       babel({
