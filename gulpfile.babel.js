@@ -9,6 +9,8 @@ import del from 'del';
 import browserSync from 'browser-sync';
 import ghPages from 'gulp-gh-pages';
 import plumber from 'gulp-plumber';
+import postcss from 'gulp-postcss';
+import autoprefixer from 'autoprefixer';
 
 const paths = {
   html: {
@@ -37,14 +39,19 @@ function copyHTML() {
 }
 
 export function styles() {
-  return gulp
-    .src(paths.styles.src)
-    .pipe(plumber())
-    .pipe(sourcemaps.init())
-    .pipe(sass().on('error', sass.logError))
-    .pipe(sourcemaps.write('./'))
-    .pipe(gulp.dest(paths.styles.dest))
-    .pipe(browserSync.stream());
+  const plugins = [autoprefixer()];
+  return (
+    gulp
+      .src(paths.styles.src)
+      .pipe(plumber())
+      .pipe(sourcemaps.init())
+      .pipe(sass().on('error', sass.logError))
+      // 這時已經編譯好 css
+      .pipe(postcss(plugins))
+      .pipe(sourcemaps.write('./'))
+      .pipe(gulp.dest(paths.styles.dest))
+      .pipe(browserSync.stream())
+  );
 }
 
 export function scripts() {
