@@ -1,16 +1,33 @@
 import gulp from 'gulp';
-import sourcemaps from 'gulp-sourcemaps';
-import sass from 'gulp-sass';
+import gulpLoadPlugins from 'gulp-load-plugins';
 import nodeSass from 'node-sass';
-import babel from 'gulp-babel';
-import concat from 'gulp-concat';
-import uglify from 'gulp-uglify';
+import autoprefixer from 'autoprefixer';
 import del from 'del';
 import browserSync from 'browser-sync';
-import ghPages from 'gulp-gh-pages';
-import plumber from 'gulp-plumber';
-import postcss from 'gulp-postcss';
-import autoprefixer from 'autoprefixer';
+import minimist from 'minimist';
+// import sourcemaps from 'gulp-sourcemaps';
+// import sass from 'gulp-sass';
+// import babel from 'gulp-babel';
+// import concat from 'gulp-concat';
+// import uglify from 'gulp-uglify';
+// import ghPages from 'gulp-gh-pages';
+// import plumber from 'gulp-plumber';
+// import postcss from 'gulp-postcss';
+
+const $ = gulpLoadPlugins();
+
+const envOptions = {
+  // 透過「--env 參數」方式，可以將參數帶入 env 的屬性中
+  string: 'env',
+  // 預設會輸出 develop 字串
+  default: {
+    env: 'develop',
+  },
+};
+
+const options = minimist(process.argv.slice(2), envOptions);
+//現在開發狀態
+console.log(`Current mode：${options.env}`);
 
 const paths = {
   html: {
@@ -25,9 +42,19 @@ const paths = {
     src: './src/scripts/**/*.js',
     dest: 'dist/scripts/',
   },
+  images: {
+    src: [
+      './src/images/**/*.jpg',
+      './src/images/**/*.jpeg',
+      './src/images/**/*.png',
+      './src/images/**/*.gif',
+      './src/images/**/*.svg',
+    ],
+    dest: 'dist/images/',
+  },
 };
 
-sass.compiler = nodeSass;
+$.sass.compiler = nodeSass;
 
 export const clean = () => del(['dist']);
 
@@ -43,12 +70,13 @@ export function styles() {
   return (
     gulp
       .src(paths.styles.src)
-      .pipe(plumber())
-      .pipe(sourcemaps.init())
-      .pipe(sass().on('error', sass.logError))
+      .pipe($.plumber())
+      .pipe($.sourcemaps.init())
+      .pipe($.sass().on('error', $.sass.logError))
       // 這時已經編譯好 css
-      .pipe(postcss(plugins))
-      .pipe(sourcemaps.write('./'))
+      .pipe($.postcss(plugins))
+      .pipe($.if(options.env === 'production', $.cleanCss()))
+      .pipe($.sourcemaps.write('./'))
       .pipe(gulp.dest(paths.styles.dest))
       .pipe(browserSync.stream())
   );
@@ -57,18 +85,35 @@ export function styles() {
 export function scripts() {
   return gulp
     .src(paths.scripts.src, { sourcemaps: true })
-    .pipe(plumber())
-    .pipe(sourcemaps.init())
+    .pipe($.plumber())
+    .pipe($.sourcemaps.init())
     .pipe(
-      babel({
+      $.babel({
         presets: ['@babel/env'],
       })
     )
-    .pipe(uglify())
-    .pipe(concat('all.js'))
-    .pipe(sourcemaps.write('./'))
+    .pipe(
+      $.if(
+        options.env === 'production',
+        $.uglify({
+          compress: {
+            drop_console: true,
+          },
+        })
+      )
+    )
+    .pipe($.order(['index.js', 'about.js', 'contact.js']))
+    .pipe($.concat('all.js'))
+    .pipe($.sourcemaps.write('./'))
     .pipe(gulp.dest(paths.scripts.dest))
     .pipe(browserSync.stream());
+}
+
+export function images() {
+  return gulp
+    .src(paths.images.src)
+    .pipe($.if(options.env === 'production', $.imagemin()))
+    .pipe(gulp.dest(paths.images.dest));
 }
 
 export function browser() {
@@ -87,15 +132,18 @@ export function watchFiles() {
 }
 
 export function deploy() {
-  return gulp.src('./dist/**/*').pipe(ghPages());
+  return gulp.src('./dist/**/*').pipe($.ghPages());
 }
 
-const build = gulp.series(
+const dev = gulp.series(
   clean,
+  images,
   copyHTML,
   styles,
   scripts,
   gulp.parallel(browser, watchFiles)
 );
 
-export default build;
+export const build = gulp.series(clean, images, copyHTML, styles, scripts);
+
+export default dev;
