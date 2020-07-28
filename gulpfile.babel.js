@@ -5,14 +5,6 @@ import autoprefixer from 'autoprefixer';
 import del from 'del';
 import browserSync from 'browser-sync';
 import minimist from 'minimist';
-// import sourcemaps from 'gulp-sourcemaps';
-// import sass from 'gulp-sass';
-// import babel from 'gulp-babel';
-// import concat from 'gulp-concat';
-// import uglify from 'gulp-uglify';
-// import ghPages from 'gulp-gh-pages';
-// import plumber from 'gulp-plumber';
-// import postcss from 'gulp-postcss';
 
 const $ = gulpLoadPlugins();
 
@@ -21,8 +13,8 @@ const envOptions = {
   string: 'env',
   // 預設會輸出 develop 字串
   default: {
-    env: 'develop',
-  },
+    env: 'develop'
+  }
 };
 
 const options = minimist(process.argv.slice(2), envOptions);
@@ -30,17 +22,22 @@ const options = minimist(process.argv.slice(2), envOptions);
 console.log(`Current mode：${options.env}`);
 
 const paths = {
+  json: {
+    menuSrc: './src/data/menu.json',
+    indexSrc: './src/data/index.json'
+  },
   html: {
     src: './src/**/*.html',
-    dest: 'dist/',
+    ejsSrc: './src/**/*.ejs',
+    dest: 'dist/'
   },
   styles: {
     src: './src/scss/**/*.scss',
-    dest: 'dist/styles/',
+    dest: 'dist/styles/'
   },
   scripts: {
     src: './src/scripts/**/*.js',
-    dest: 'dist/scripts/',
+    dest: 'dist/scripts/'
   },
   images: {
     src: [
@@ -48,19 +45,33 @@ const paths = {
       './src/images/**/*.jpeg',
       './src/images/**/*.png',
       './src/images/**/*.gif',
-      './src/images/**/*.svg',
+      './src/images/**/*.svg'
     ],
-    dest: 'dist/images/',
-  },
+    dest: 'dist/images/'
+  }
 };
 
 $.sass.compiler = nodeSass;
 
 export const clean = () => del(['dist']);
 
-function copyHTML() {
+export function layoutHTML() {
   return gulp
     .src(paths.html.src)
+    .pipe($.plumber())
+    .pipe($.frontMatter())
+    .pipe(
+      $.data(function (file) {
+        const menu = require(paths.json.menuSrc);
+        const indexContent = require(paths.json.indexSrc);
+        return { menu, indexContent };
+      })
+    )
+    .pipe(
+      $.layout((file) => {
+        return file.frontMatter;
+      })
+    )
     .pipe(gulp.dest(paths.html.dest))
     .pipe(browserSync.stream());
 }
@@ -89,7 +100,7 @@ export function scripts() {
     .pipe($.sourcemaps.init())
     .pipe(
       $.babel({
-        presets: ['@babel/env'],
+        presets: ['@babel/env']
       })
     )
     .pipe(
@@ -97,8 +108,8 @@ export function scripts() {
         options.env === 'production',
         $.uglify({
           compress: {
-            drop_console: true,
-          },
+            drop_console: true
+          }
         })
       )
     )
@@ -119,14 +130,15 @@ export function images() {
 export function browser() {
   browserSync.init({
     server: {
-      baseDir: './dist/',
+      baseDir: './dist/'
     },
-    port: 8082,
+    port: 8082
   });
 }
 
 export function watchFiles() {
-  gulp.watch(paths.html.src, copyHTML);
+  gulp.watch(paths.html.src, layoutHTML);
+  gulp.watch(paths.html.ejsSrc, layoutHTML);
   gulp.watch(paths.scripts.src, scripts);
   gulp.watch(paths.styles.src, styles);
 }
@@ -138,12 +150,12 @@ export function deploy() {
 const dev = gulp.series(
   clean,
   images,
-  copyHTML,
+  layoutHTML,
   styles,
   scripts,
   gulp.parallel(browser, watchFiles)
 );
 
-export const build = gulp.series(clean, images, copyHTML, styles, scripts);
+export const build = gulp.series(clean, images, layoutHTML, styles, scripts);
 
 export default dev;
