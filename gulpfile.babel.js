@@ -13,8 +13,8 @@ const envOptions = {
   string: 'env',
   // 預設會輸出 develop 字串
   default: {
-    env: 'develop'
-  }
+    env: 'develop',
+  },
 };
 
 const options = minimist(process.argv.slice(2), envOptions);
@@ -24,20 +24,20 @@ console.log(`Current mode：${options.env}`);
 const paths = {
   json: {
     menuSrc: './src/data/menu.json',
-    indexSrc: './src/data/index.json'
+    indexSrc: './src/data/index.json',
   },
   html: {
     src: './src/**/*.html',
     ejsSrc: './src/**/*.ejs',
-    dest: 'dist/'
+    dest: 'dist/',
   },
   styles: {
     src: './src/scss/**/*.scss',
-    dest: 'dist/styles/'
+    dest: 'dist/styles/',
   },
   scripts: {
     src: './src/scripts/**/*.js',
-    dest: 'dist/scripts/'
+    dest: 'dist/scripts/',
   },
   images: {
     src: [
@@ -45,21 +45,19 @@ const paths = {
       './src/images/**/*.jpeg',
       './src/images/**/*.png',
       './src/images/**/*.gif',
-      './src/images/**/*.svg'
+      './src/images/**/*.svg',
     ],
-    dest: 'dist/images/'
-  }
+    dest: 'dist/images/',
+  },
 };
 
 $.sass.compiler = nodeSass;
 
 export const clean = () => del(['dist']);
 
-export function layoutHTML() {
+export function ejs() {
   return gulp
-    .src(paths.html.src)
-    .pipe($.plumber())
-    .pipe($.frontMatter())
+    .src([paths.html.ejsSrc, paths.html.src])
     .pipe(
       $.data(function (file) {
         const menu = require(paths.json.menuSrc);
@@ -67,13 +65,33 @@ export function layoutHTML() {
         return { menu, indexContent };
       })
     )
-    .pipe(
-      $.layout((file) => {
-        return file.frontMatter;
-      })
-    )
-    .pipe(gulp.dest(paths.html.dest))
-    .pipe(browserSync.stream());
+    .pipe($.ejs())
+    .pipe(gulp.dest(paths.html.dest));
+}
+
+export function layoutHTML() {
+  return (
+    gulp
+      .src([paths.html.src, paths.html.ejsSrc])
+      .pipe($.plumber())
+      .pipe(
+        $.data(function (file) {
+          const menu = require(paths.json.menuSrc);
+          const indexContent = require(paths.json.indexSrc);
+          const title = '首頁';
+          return { menu, indexContent, title };
+        })
+      )
+      .pipe($.ejs())
+      // .pipe($.frontMatter())
+      // .pipe(
+      //   $.layout((file) => {
+      //     return file.frontMatter;
+      //   })
+      // )
+      .pipe(gulp.dest(paths.html.dest))
+      .pipe(browserSync.stream())
+  );
 }
 
 export function styles() {
@@ -100,7 +118,7 @@ export function scripts() {
     .pipe($.sourcemaps.init())
     .pipe(
       $.babel({
-        presets: ['@babel/env']
+        presets: ['@babel/env'],
       })
     )
     .pipe(
@@ -108,8 +126,8 @@ export function scripts() {
         options.env === 'production',
         $.uglify({
           compress: {
-            drop_console: true
-          }
+            drop_console: true,
+          },
         })
       )
     )
@@ -130,9 +148,9 @@ export function images() {
 export function browser() {
   browserSync.init({
     server: {
-      baseDir: './dist/'
+      baseDir: './dist/',
     },
-    port: 8082
+    port: 8082,
   });
 }
 
