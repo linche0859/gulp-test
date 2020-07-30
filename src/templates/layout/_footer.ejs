@@ -1,0 +1,8 @@
+<!-- global script -->
+<% scripts.forEach(function(js){ %>
+<script src="<%= js %>"></script>
+<% }) %>
+<!-- local script -->
+<% if(local.scripts) { local.scripts.forEach(function(js){ %>
+<script src="<%= js %>"></script>
+<% }) } %>

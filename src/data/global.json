@@ -1,0 +1,16 @@
+{
+  "site": "gulp-ejs-demo",
+  "styles": [
+    "//cdn.bootcss.com/bootstrap/3.3.5/css/bootstrap.min.css",
+    "./styles/all.css"
+  ],
+  "scripts": [
+    "//cdn.bootcss.com/jquery/1.11.3/jquery.min.js",
+    "//cdn.bootcss.com/bootstrap/3.3.5/js/bootstrap.min.js"
+  ],
+  "menu": [
+    { "page": "index", "name": "首頁" },
+    { "page": "about", "name": "關於我們" },
+    { "page": "contact", "name": "聯絡我們" }
+  ]
+}
