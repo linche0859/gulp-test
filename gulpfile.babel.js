@@ -40,10 +40,19 @@ const paths = {
   },
   styles: {
     src: './src/scss/**/*.scss',
+    includePaths: './node_modules/bootstrap/scss',
+    outputStyle: 'expand',
     dest: 'dist/styles/'
   },
   scripts: {
     src: './src/scripts/**/*.js',
+    dest: 'dist/scripts/'
+  },
+  vendors: {
+    src: [
+      './node_modules/jquery/dist/jquery.slim.min.js',
+      './node_modules/bootstrap/dist/js/bootstrap.bundle.min.js' // 已包含 popper.js
+    ],
     dest: 'dist/scripts/'
   },
   images: {
@@ -111,7 +120,12 @@ export function styles() {
       .src(paths.styles.src)
       .pipe($.plumber())
       .pipe($.sourcemaps.init())
-      .pipe($.sass().on('error', $.sass.logError))
+      .pipe(
+        $.sass({
+          outputStyle: paths.styles.outputStyle,
+          includePaths: paths.styles.includePaths
+        }).on('error', $.sass.logError)
+      )
       // 這時已經編譯好 css
       .pipe($.postcss(plugins))
       .pipe($.if(options.env === 'production', $.cleanCss()))
@@ -119,6 +133,13 @@ export function styles() {
       .pipe(gulp.dest(paths.styles.dest))
       .pipe(browserSync.stream())
   );
+}
+
+export function vendorsJs() {
+  return gulp
+    .src(paths.vendors.src)
+    .pipe($.concat('vendors.js'))
+    .pipe(gulp.dest(paths.scripts.dest));
 }
 
 export function scripts() {
@@ -162,7 +183,8 @@ export function browser() {
     server: {
       baseDir: './dist/'
     },
-    port: 8082
+    port: 8082,
+    reloadDebounce: 2000
   });
 }
 
@@ -185,6 +207,7 @@ const dev = gulp.series(
   ejs,
   layoutHTML,
   styles,
+  vendorsJs,
   scripts,
   gulp.parallel(browser, watchFiles)
 );
@@ -195,6 +218,7 @@ export const build = gulp.series(
   ejs,
   layoutHTML,
   styles,
+  vendorsJs,
   scripts
 );
 

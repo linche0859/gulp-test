@@ -1,10 +1,4 @@
-$primary: #f00;
-$secondary: #00f;
+@import 'functions';
+@import './helpers/variables';
 
-body {
-  color: $secondary;
-}
-
-.card {
-  transform: translate(50%, 50%);
-}
+@import 'bootstrap';
